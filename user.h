@@ -29,6 +29,9 @@ int getChildren(void);
 int getSibling(void);
 int getname(void);
 int pstree(void);
+int welcomeFunction(void (*fn)(void));
+int welcomeDone(void);
+
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
