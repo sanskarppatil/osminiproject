@@ -126,3 +126,22 @@ int sys_getname(void){
 int sys_pstree(void){
  return pstree();
 }
+int
+sys_welcomeFunction(void)
+{
+    uint fn;
+
+    // read argument 0 as an integer (the function address)
+    if(argint(0, (int*)&fn) < 0)
+        return -1;
+
+    myproc()->welcome_fn = (void (*)())fn;
+    return 0;
+}
+int
+sys_welcomeDone(void)
+{
+    struct proc *p = myproc();
+    p->tf->eip = p->saved_eip;     // restore original execution point
+    return 0;
+}

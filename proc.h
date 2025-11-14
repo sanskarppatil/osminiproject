@@ -49,6 +49,9 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  void (*welcome_fn)(void);   // parent-specified function
+  uint saved_eip;             // child's normal post-fork EIP
+
 };
 
 // Process memory is laid out contiguously, low addresses first:

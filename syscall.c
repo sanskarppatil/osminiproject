@@ -109,6 +109,8 @@ extern int sys_getChildren(void);
 extern int sys_getSibling(void);
 extern int sys_getname(void);
 extern int sys_pstree(void);
+extern int sys_welcomeFunction(void);
+extern int sys_welcomeDone(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -138,6 +140,8 @@ static int (*syscalls[])(void) = {
 [SYS_getSibling] sys_getSibling,
 [SYS_getname] sys_getname,
 [SYS_pstree]  sys_pstree,
+[SYS_welcomeFunction] sys_welcomeFunction,
+[SYS_welcomeDone]      sys_welcomeDone,
 };
 
 void

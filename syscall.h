@@ -26,3 +26,5 @@
 #define SYS_getSibling 25
 #define SYS_getname 26
 #define SYS_pstree 27
+#define SYS_welcomeFunction  28
+#define SYS_welcomeDone  29

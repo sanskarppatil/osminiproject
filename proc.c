@@ -199,7 +199,12 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+  np->saved_eip = np->tf->eip;
 
+// If parent has set a welcome function, override child's EIP
+  if(curproc->welcome_fn != 0){
+  np->tf->eip = (uint) curproc->welcome_fn;
+  }
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
 
