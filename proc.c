@@ -722,41 +722,29 @@ get_proc_state(int pid, char *buf, int size)
 
   return found;
 }
-int
-fill_proc_name(int pid, const char *name)
+int fill_proc_name(int pid,const char *name)
 {
   struct proc *p;
-  int found = 0; // 0 = not found, 1 = found
 
   acquire(&ptable.lock);
 
-  // Loop through process table
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p->pid == pid){
-      // Found the process. Set flag to 1.
-      found = 1;
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->pid == pid)
+    {
+      // Clear existing name
+      memset(p->proc_name, 0, sizeof(p->proc_name));
 
-      // Safely copy the string from user-space (name)
-      // into the kernel-space buffer (p->proc_name).
-      // We use copyin, which is the correct tool for this.
-      if(copyout(p->pgdir, (uint)name, p->proc_name, sizeof(p->proc_name)) < 0) {
-        // copyin failed (e.g., user passed a bad pointer).
-        // We'll just set the name to empty.
-        p->proc_name[0] = '\0';
-      } else {
-        // copyin succeeded, but it might not have copied a
-        // null-terminator if the user string was 16 bytes or longer.
-        // We MUST force null-termination at the end of our buffer.
-        p->proc_name[sizeof(p->proc_name) - 1] = '\0';
-      }
-      
-      break; // Exit loop once process is found
+      // Copy at most 15 chars + null terminator
+      safestrcpy(p->proc_name, name, sizeof(p->proc_name));
+
+      release(&ptable.lock);
+      return 1; // success: process found
     }
   }
 
   release(&ptable.lock);
-  
-  return found;
+  return 0; // process with given PID not found
 }
 // ... (existing code in proc.c) ...
 
@@ -770,70 +758,32 @@ fill_proc_name(int pid, const char *name)
 // into the user-space buffer 'buf'.
 // Returns 1 on success, 0 otherwise.
 //
-int
-get_proc_name(int pid, char *buf, int size)
+int get_proc_name(int pid, char *buf, int size)
 {
   struct proc *p;
-  char *process_name;
-  int len;
-  int found = 0;
 
-  if (size <= 0) {
-    return 0; // Invalid buffer size
-  }
+  if (size <= 0)
+    return 0;
 
   acquire(&ptable.lock);
 
-  // Loop through process table
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p->pid == pid){
-      // Found the process.
-      // We read from the 'proc_name' field you added.
-      process_name = p->proc_name;
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->pid == pid)
+    {
+      // Copy pname into user buffer
+      // size ensures we don't overflow user buffer
+      safestrcpy(buf, p->proc_name, size);
 
-      // Get length including null terminator
-      len = strlen(process_name) + 1;
-
-      // Determine how many bytes to copy
-      // We copy at most 'size' bytes
-      int bytes_to_copy = (len < size) ? len : size;
-
-      // Safely copy the string from kernel space (process_name)
-      // to the user-space buffer (buf).
-      //
-      // Prototype from your screenshot:
-      // int copyout(pde_t *pgdir, uint va, void *p, uint len);
-      //
-      // myproc()->pgdir = The user process's page directory
-      // (uint)buf       = The user-space virtual address (the buffer)
-      // process_name    = The kernel-space data source
-      // bytes_to_copy   = The number of bytes
-      //
-      if(copyout(myproc()->pgdir, (uint)buf, process_name, bytes_to_copy) < 0) {
-        // Failed to copy to user space (e.g., bad pointer)
-        found = 0;
-      } else {
-        // Success!
-        found = 1;
-
-        // If we truncated the string, we must ensure the user's
-        // buffer is null-terminated for safety.
-        if(bytes_to_copy == size) {
-          char null_byte = '\0';
-          // Write a null to the very last byte of the user buffer
-          copyout(myproc()->pgdir, (uint)buf + size - 1, &null_byte, 1);
-          // We ignore the return value here, it's a best-effort
-        }
-      }
-
-      break; // Exit loop once process is found
+      release(&ptable.lock);
+      return 1; // success
     }
   }
 
   release(&ptable.lock);
-
-  return found;
+  return 0; // not found
 }
+
 int
 get_num_syscall(int pid)
 {
