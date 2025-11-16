@@ -556,41 +556,29 @@ getChildren(void)
   cprintf("No. of Children: %d\n", count);
   return 0;
 }
-// In kernel/proc.c
 
 int
 getSibling(void)
 {
-  struct proc *curproc = myproc(); // Get the process calling the syscall
-  struct proc *p;                  // A process to iterate with
+  struct proc *curproc = myproc(); 
+  struct proc *p;                  
   int count = 0;
 
-  // The 'init' process (pid 1) has no parent, so it has no siblings.
-  // We check for curproc->parent to avoid a null pointer.
   if(curproc->parent == 0){
     cprintf("No siblings found.\n");
     return 0;
   }
 
   cprintf("Sibling PID's are:\n");
-
-  // Acquire the lock to safely read the process table
   acquire(&ptable.lock);
 
-  // Loop through all processes
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-
-    // A sibling is a process that:
-    // 1. Has the same parent as the current process.
-    // 2. Is NOT the current process itself.
-    // 3. Is currently active (not UNUSED).
     if(p->parent == curproc->parent && p != curproc && p->state != UNUSED){
       cprintf("%d\n", p->pid);
       count++;
     }
   }
 
-  // Release the lock
   release(&ptable.lock);
 
   cprintf("No. of Siblings: %d\n", count);
@@ -599,19 +587,17 @@ getSibling(void)
 void
 pstree_helper(struct proc *p, int depth)
 {
-  // 1. Print indentation
+ 
   for (int i = 0; i < depth; i++) {
-    cprintf(" "); // Print one space per level of depth
+    cprintf(" "); 
   }
 
-  // 2. Print the current process info
+
   cprintf("%d [%s]\n", p->pid, p->name);
 
-  // 3. Find all children and recurse
   struct proc *child;
   for (child = ptable.proc; child < &ptable.proc[NPROC]; child++) {
     if (child->parent == p && child->state != UNUSED) {
-      // 4. Call self for the child, increasing depth
       pstree_helper(child, depth + 1);
     }
   }
@@ -650,71 +636,36 @@ is_proc_valid(int pid){
   return ans;
 }
 
-
-// ... (existing code like allocproc, userinit, scheduler, etc.) ...
-
-//
-// ADD THIS NEW FUNCTION
-//
-// int get_proc_state(int pid, char *buf, int size)
-//
-// Looks for a process with the given PID.
-// If found, copies the process's state string (e.g., "SLEEPING")
-// into the user-space buffer 'buf' up to 'size' bytes.
-// Returns 1 on success (process found and copied), 0 otherwise.
-//
-static char *states[] = {
-[UNUSED]    "UNUSED",
-[EMBRYO]    "EMBRYO",
-[SLEEPING]  "SLEEPING",
-[RUNNABLE]  "RUNNABLE",
-[RUNNING]   "RUNNING",
-[ZOMBIE]    "ZOMBIE"
-};
+// Return 1 if process exists and fill buf with its state string.
+// Return 0 if not found.
 int
 get_proc_state(int pid, char *buf, int size)
 {
-  struct proc *p;
-  char *state_str;
-  int len;
-  int found = 0;
+  static char *states[] = {
+    [UNUSED]    "UNUSED",
+    [EMBRYO]    "EMBRYO",
+    [SLEEPING]  "SLEEPING",
+    [RUNNABLE]  "RUNNABLE",
+    [RUNNING]   "RUNNING",
+    [ZOMBIE]    "ZOMBIE"
+  };
 
-  if (size <= 0) {
-    return 0; // Invalid buffer size
-  }
+  struct proc *p;
+  int found = 0;
 
   acquire(&ptable.lock);
 
-  // Loop through process table
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
-      // Found the process
-      state_str = states[p->state];
-      len = strlen(state_str) + 1; // Get length including null terminator
-
-      // Determine how many bytes to copy
-      // We copy at most 'size' bytes
-      int bytes_to_copy = (len < size) ? len : size;
-
-      // Safely copy the string from kernel space to the user-space buffer
-      if(copyout(myproc()->pgdir, (uint)buf, state_str, bytes_to_copy) < 0) {
-        // Failed to copy to user space (e.g., bad pointer)
-        found = 0;
+      // Found process
+      if(p->state >= 0 && p->state < NELEM(states) && states[p->state]){
+        safestrcpy(buf, states[p->state], size);
       } else {
-        // Success!
-        found = 1;
-
-        // If we truncated the string, we must ensure the user's
-        // buffer is null-terminated for safety.
-        if(bytes_to_copy == size) {
-          char null_byte = '\0';
-          // Write a null to the very last byte of the user buffer
-          copyout(myproc()->pgdir, (uint)buf + size - 1, &null_byte, 1);
-          // We ignore the return value here, it's a best-effort
-        }
+        safestrcpy(buf, "UNKNOWN", size);
       }
 
-      break; // Exit loop once process is found
+      found = 1;
+      break;
     }
   }
 
@@ -722,6 +673,7 @@ get_proc_state(int pid, char *buf, int size)
 
   return found;
 }
+
 int fill_proc_name(int pid,const char *name)
 {
   struct proc *p;
@@ -732,32 +684,20 @@ int fill_proc_name(int pid,const char *name)
   {
     if (p->pid == pid)
     {
-      // Clear existing name
       memset(p->proc_name, 0, sizeof(p->proc_name));
 
-      // Copy at most 15 chars + null terminator
+      
       safestrcpy(p->proc_name, name, sizeof(p->proc_name));
 
       release(&ptable.lock);
-      return 1; // success: process found
+      return 1; 
     }
   }
 
   release(&ptable.lock);
-  return 0; // process with given PID not found
+  return 0; 
 }
-// ... (existing code in proc.c) ...
 
-//
-// ADD THIS NEW FUNCTION
-//
-// int get_proc_name(int pid, char *buf, int size)
-//
-// Looks for a process with the given PID.
-// If found, copies the process's 'proc_name' string
-// into the user-space buffer 'buf'.
-// Returns 1 on success, 0 otherwise.
-//
 int get_proc_name(int pid, char *buf, int size)
 {
   struct proc *p;
@@ -771,31 +711,28 @@ int get_proc_name(int pid, char *buf, int size)
   {
     if (p->pid == pid)
     {
-      // Copy pname into user buffer
-      // size ensures we don't overflow user buffer
+      
       safestrcpy(buf, p->proc_name, size);
 
       release(&ptable.lock);
-      return 1; // success
+      return 1; 
     }
   }
 
   release(&ptable.lock);
-  return 0; // not found
+  return 0; 
 }
 
 int
 get_num_syscall(int pid)
 {
   struct proc *p;
-  int count = -1; // Default to -1 (error/not found)
+  int count = -1; 
 
   acquire(&ptable.lock);
 
-  // Loop through process table
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
-      // Found the process
       count = p->syscall_count;
       break;
     }
@@ -803,7 +740,7 @@ get_num_syscall(int pid)
 
   release(&ptable.lock);
 
-  return count; // Returns -1 if pid not found, or p->syscall_count if found
+  return count;
 }
 int get_num_timer_interrupts(int pid) {
     struct proc *p;
@@ -811,7 +748,7 @@ int get_num_timer_interrupts(int pid) {
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if(p->pid == pid){
-            int count = p->timer_interrupt_count;  // field in proc struct
+            int count = p->timer_interrupt_count;
             release(&ptable.lock);
             return count;
         }
