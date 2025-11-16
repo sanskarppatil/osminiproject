@@ -195,6 +195,7 @@ UPROGS=\
 	_test_proc_name\
 	_test_num_s\
 	_test_num_t\
+	_ps\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -261,9 +262,10 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 # rename it to rev0 or rev1 or so on and then
 # check in that version.
 
+
 EXTRA=\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
-	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c test_valid.c test_state.c test_proc_name.c test_num_s.c test_num_t.c\
+	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c test_valid.c test_state.c test_proc_name.c test_num_s.c test_num_t.c ps.c\
 	printf.c umalloc.c mytest.c bakchodi.c hello_test.c helloYou_test.c getChildren_test.c getSibling_test.c getname_test.c pstree_test.c t-fork-wlcm.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
