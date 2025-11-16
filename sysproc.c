@@ -240,3 +240,11 @@ sys_get_num_syscall(void)
   // Call the real implementation
   return get_num_syscall(pid);
 }
+// timer interrupt count syscall
+int sys_get_num_timer_interrupts(void) {
+    int pid;
+    if(argint(0, &pid) < 0)
+        return -1;
+
+    return get_num_timer_interrupts(pid);
+}

@@ -116,6 +116,7 @@ extern int sys_get_proc_state(void);
 extern int sys_fill_proc_name(void);
 extern int sys_get_proc_name(void);
 extern int sys_get_num_syscall(void);
+extern int sys_get_num_timer_interrupts(void);
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
@@ -151,6 +152,7 @@ static int (*syscalls[])(void) = {
 [SYS_fill_proc_name] sys_fill_proc_name,
 [SYS_get_proc_name]  sys_get_proc_name,
 [SYS_get_num_syscall] sys_get_num_syscall,
+[SYS_get_num_timer_interrupts] sys_get_num_timer_interrupts,
 };
 
 void

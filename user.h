@@ -36,6 +36,7 @@ int get_proc_state(int,char *,int);
 int fill_proc_name(int,const char *);
 int get_proc_name(int,char *,int);
 int get_num_syscall(int);
+int get_num_timer_interrupts(int);
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);

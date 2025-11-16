@@ -53,6 +53,7 @@ struct proc {
   void (*welcome_fn)(void);   // parent-specified function
   uint saved_eip;             // child's normal post-fork EIP
   int syscall_count;
+  int timer_interrupt_count;
 };
 
 // Process memory is laid out contiguously, low addresses first:

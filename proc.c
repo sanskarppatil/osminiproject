@@ -855,3 +855,17 @@ get_num_syscall(int pid)
 
   return count; // Returns -1 if pid not found, or p->syscall_count if found
 }
+int get_num_timer_interrupts(int pid) {
+    struct proc *p;
+
+    acquire(&ptable.lock);
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->pid == pid){
+            int count = p->timer_interrupt_count;  // field in proc struct
+            release(&ptable.lock);
+            return count;
+        }
+    }
+    release(&ptable.lock);
+    return -1;
+}

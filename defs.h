@@ -126,6 +126,8 @@ int             get_proc_state(int pid,char *buf,int size);
 int             fill_proc_name(int pid,const char *name);
 int             get_proc_name(int pid,char * buf,int size);
 int             get_num_syscall(int pid);
+int             get_num_timer_interrupts(int); 
+
 // swtch.S
 void            swtch(struct context**, struct context*);
 
